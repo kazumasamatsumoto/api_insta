@@ -6,13 +6,24 @@ from django.conf import settings
 
 # Create your models here.
 
+# 画像アップロード時にファイルパスを生成する関数
+# instanceはProfileで生成、filenameはフロントエンドから取得
 def upload_avatar_path(instance, filename):
+    # 拡張子の取得
+    # 拡張子の取得は.で区切って配列で格納した最後の値なので
+    # filenameの文字列を.によるsplitで分割格納
+    # 一番最後の配列は[-1]と表記できる(pythonの場合)
+    # sample.png = [sample, png]
     ext = filename.split('.')[-1]
+    # /avatars/userProfileId + InstanceNickname.extの形式で格納
     return '/'.join(['avatars', str(instance.userProfile.id) + str(instance.nickName) + str(".") + str(ext)])
 
 
+# 投稿用の画像
 def upload_post_path(instance, filename):
+    # 拡張子の取得
     ext = filename.split('.')[-1]
+    # /posts/userProfileId + InstanceTitle.extの形式で格納
     return '/'.join(['posts', str(instance.userPost.id) + str(instance.title) + str(".") + str(ext)])
 
 
@@ -77,35 +88,61 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+# Profileクラスの作成
 class Profile(models.Model):
+    # 属性
+    # ニックネーム キャラフィールドを使用して最大文字数を20文字とする
     nickName = models.CharField(max_length=20)
+    # ユーザープロフィールという属性
+    # djangoのユーザーモデルとプロフィールを紐付ける（OneToOneFieldの形式で紐づける）
     userProfile = models.OneToOneField(
         settings.AUTH_USER_MODEL, related_name='userProfile',
+        # プロフィールはOneToOneでユーザーに連動しているため
+        # 元となるユーザーが削除された場合はそれに紐づいているプロフィールも削除したいと
+        # その時にCASCADEを設定していると自動的に削除することができる
         on_delete=models.CASCADE
     )
+    # プロフィールのインスタンスが作成された時に自動で日時をcreate_onに格納する
     created_on = models.DateTimeField(auto_now_add=True)
-    # アバターの画像イメージを登録する
-    #
+    # アバターの画像イメージを保持します
+    # ImageFieldを使用して画像を保持します。
+    # アバター画像なので画像を登録したくない人もいるためblankとnullをTrueに設定する
+    # アバターの画像をの保存先をupload_avatar_pathから取得（後ほどオリジナルで作成する
     img = models.ImageField(blank=True, null=True, upload_to=upload_avatar_path)
 
+    # printなどで呼ばれたときはニックネームを返してあげる
+    def __str__(self):
+        return self.nickName
 
+
+# 投稿用のクラス
 class Post(models.Model):
+    # 文字列100文字
     title = models.CharField(max_length=100)
+    # 投稿者ForeignKeyでUserModelを紐付けユーザー削除による自動削除も同様
     userPost = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='userPost', on_delete=models.CASCADE)
+    # 作成時に時間取得
     created_on = models.DateTimeField(auto_now_add=True)
+    # 画像処理パスの作成はアバター時と同様
     img = models.ImageField(blank=True, null=True, upload_to=upload_post_path)
+    # いいね機能
     liked = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked', blank=True)
 
+    # titleを返す
     def __str__(self):
         return self.title
 
-
+# コメント
 class Comment(models.Model):
+    # テキストはCharFieldで100文字まで
     text = models.CharField(max_length=100)
+    # ユーザーコメントはどのユーザーが入力したかを追えるようにdjangoのユーザーモデルに紐付け
     userComment = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='userComment', on_delete=models.CASCADE
     )
+    # 投稿が削除された場合はコメント自体も削除する
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
+    # 返り値はコメントの内容自体を返す
     def __str__(self):
         return self.text
