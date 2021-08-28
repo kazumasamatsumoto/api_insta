@@ -139,12 +139,11 @@ USE_L10N = True
 USE_TZ = True
 
 # 独自にログイン機能を作った場合はこのように宣言する必要がある。
-AUTH_USER_MODEL = 'api.user'
+AUTH_USER_MODEL = 'api.User'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-
 
 # プロジェクト直下にmediaディレクトリを作成して、保存先とする
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

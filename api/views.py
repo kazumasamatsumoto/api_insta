@@ -26,7 +26,7 @@ from .models import Profile, Post, Comment
 # 作成するだけなのでCreateAPIViewを呼び出す
 class CreateUserView(generics.CreateAPIView):
     # ユーザーを作成するためにDBの中継のシリアライザーはUserSerializerが必要
-    serializers_class = serializers.UserSerializer
+    serializer_class = serializers.UserSerializer
     # 誰でもアクセスできるようにする
     permission_classes = (AllowAny,)
 
