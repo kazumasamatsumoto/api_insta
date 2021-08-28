@@ -132,6 +132,7 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
+
 # コメント
 class Comment(models.Model):
     # テキストはCharFieldで100文字まで
